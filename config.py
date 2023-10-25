@@ -13,23 +13,26 @@ cfg = C
 C.seed = 12345
 
 remoteip = os.popen('pwd').read()
-C.root_dir = os.path.abspath(os.path.join(os.getcwd(), './'))
+# C.root_dir = os.path.abspath(os.path.join(os.getcwd(), './'))
+C.root_dir = "/data/net/dl_data/ProjectDatasets_bkx/CMX/"
 C.abs_dir = osp.realpath(".")
 
 # Dataset config
 """Dataset Path"""
+# 数据集格式整理的要求，在给定root_dir的前提下，sub_folder是datasets/NYUDepthv2; 在此文件夹下再有RGB/Label/HHA文件夹
+# 在HHA文件夹下支持两种深度图，一个是原始深度图，此时需要C.x_is_single_channel设置为True，如果是HHA编码则为False
 C.dataset_name = 'NYUDepthv2'
 C.dataset_path = osp.join(C.root_dir, 'datasets', 'NYUDepthv2')
-C.rgb_root_folder = osp.join(C.dataset_path, 'RGB')
-C.rgb_format = '.jpg'
-C.gt_root_folder = osp.join(C.dataset_path, 'Label')
+C.rgb_root_folder = osp.join(C.dataset_path, 'rgb')
+C.rgb_format = '.png'
+C.gt_root_folder = osp.join(C.dataset_path, 'masks')
 C.gt_format = '.png'
 C.gt_transform = True
 # True when label 0 is invalid, you can also modify the function _transform_gt in dataloader.RGBXDataset
 # True for most dataset valid, Faslse for MFNet(?)
-C.x_root_folder = osp.join(C.dataset_path, 'HHA')
-C.x_format = '.jpg'
-C.x_is_single_channel = False # True for raw depth, thermal and aolp/dolp(not aolp/dolp tri) input
+C.x_root_folder = osp.join(C.dataset_path, 'depth')
+C.x_format = '.png'
+C.x_is_single_channel = True # True for raw depth, thermal and aolp/dolp(not aolp/dolp tri) input
 C.train_source = osp.join(C.dataset_path, "train.txt")
 C.eval_source = osp.join(C.dataset_path, "test.txt")
 C.is_test = False
@@ -50,7 +53,8 @@ C.norm_std = np.array([0.229, 0.224, 0.225])
 
 """ Settings for network, this would be different for each kind of model"""
 C.backbone = 'mit_b2' # Remember change the path below.
-C.pretrained_model = C.root_dir + '/pretrained/segformer/mit_b2.pth'
+# C.pretrained_model = C.root_dir + '/pretrained/segformer/mit_b2.pth'
+C.pretrained_model = "/home/kb/MyProjects/RGBX_Semantic_Segmentation/pretrained/mit_b2.pth"
 C.decoder = 'MLPDecoder'
 C.decoder_embed_dim = 512
 C.optimizer = 'AdamW'
