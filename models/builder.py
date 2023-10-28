@@ -14,7 +14,7 @@ class EncoderDecoder(nn.Module):
     def __init__(self, cfg=None, criterion=nn.CrossEntropyLoss(reduction='mean', ignore_index=255), norm_layer=nn.BatchNorm2d):
         super(EncoderDecoder, self).__init__()
         self.channels = [64, 128, 320, 512]
-        self.norm_layer = norm_layer
+        self.norm_layer = norm_layer  # norm_layer 存储了用于标准化的层类型
         # import backbone and decoder
         if cfg.backbone == 'swin_s':
             logger.info('Using backbone: Swin-Transformer-small')
@@ -84,17 +84,24 @@ class EncoderDecoder(nn.Module):
 
         self.criterion = criterion
         if self.criterion:
+            # 这里是当criterion作为loss，当其有被定义才进行通过预训练模型进行模型的初始化，注意实际上是否要init weight和loss无关
+            # 作者在这里这么做是因为他在eval的时候将criterion设置为None
+            # 即：如果模型只是用于推断（不需要损失函数），就不需要进行权重初始化（将加载预训练权重）
+            # 而这里的pretrained model并不是本任务的预训练模型，而且其他基础模型的预训练模型，比如segformer
             self.init_weights(cfg, pretrained=cfg.pretrained_model)
     
     def init_weights(self, cfg, pretrained=None):
         if pretrained:
+            # 加载encoder的预训练模型
             logger.info('Loading pretrained model: {}'.format(pretrained))
-            self.backbone.init_weights(pretrained=pretrained)
+            self.backbone.init_weights(pretrained=pretrained) # 这里会把rgb和x模态的都用pretrain的模型给初始化，实现方式就是把键值对复制一份再把x模态的键改名
         logger.info('Initing weights ...')
+        # 初始化decoder的预训练模型
         init_weight(self.decode_head, nn.init.kaiming_normal_,
                 self.norm_layer, cfg.bn_eps, cfg.bn_momentum,
                 mode='fan_in', nonlinearity='relu')
         if self.aux_head:
+            # 如果有辅助头则初始化
             init_weight(self.aux_head, nn.init.kaiming_normal_,
                 self.norm_layer, cfg.bn_eps, cfg.bn_momentum,
                 mode='fan_in', nonlinearity='relu')
@@ -114,12 +121,16 @@ class EncoderDecoder(nn.Module):
 
     def forward(self, rgb, modal_x, label=None):
         if self.aux_head:
+            # 当decoder是MLP的时候则没有aux_head，如果是UPernet或deeplabv3则有
+            # 辅助头auxiliary head，通常用于模型训练时的额外损失计算，以帮助训练过程）
+            # 如果有辅助头，则同时返回辅助特征图aux_fm
             out, aux_fm = self.encode_decode(rgb, modal_x)
         else:
             out = self.encode_decode(rgb, modal_x)
         if label is not None:
             loss = self.criterion(out, label.long())
             if self.aux_head:
+                # 如果有辅助头，计算辅助特征图 aux_fm 和标签之间的损失，将其乘以辅助损失率（self.aux_rate），并加到主损失上
                 loss += self.aux_rate * self.criterion(aux_fm, label.long())
             return loss
         return out

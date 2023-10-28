@@ -58,7 +58,7 @@ with Engine(custom_parser=parser) as engine:
         BatchNorm2d = nn.SyncBatchNorm
     else:
         BatchNorm2d = nn.BatchNorm2d
-    model = segmodel(cfg=config, criterion=criterion, norm_layer=BatchNorm2d)
+    model = segmodel(cfg=config, criterion=criterion, norm_layer=BatchNorm2d)  # segmodel是 models / builder.py 中的 EncoderDecoder类，目的是可以更换backbone
 
     # 分组权重和设置优化器:根据BatchNorm层的权重，对模型权重进行分组,根据配置文件中的参数设置优化器
     base_lr = config.lr

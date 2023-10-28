@@ -445,9 +445,10 @@ def load_dualpath_model(model, model_file):
             raw_state_dict = raw_state_dict['model']
     else:
         raw_state_dict = model_file
-    
+    # 初始化一个空字典，用于存储将要加载到模型中的状态
     state_dict = {}
     for k, v in raw_state_dict.items():
+        # 检查键名是否包含 'patch_embed'，将键值对直接复制到新的状态字典，同时创建一个新的键，将'patch_embed'替换为'extra_patch_embed'，并复制相同的值
         if k.find('patch_embed') >= 0:
             state_dict[k] = v
             state_dict[k.replace('patch_embed', 'extra_patch_embed')] = v
@@ -459,8 +460,8 @@ def load_dualpath_model(model, model_file):
             state_dict[k.replace('norm', 'extra_norm')] = v
 
     t_ioend = time.time()
-
-    model.load_state_dict(state_dict, strict=False)
+    # 加载模型，然后把对应的weights的键值对复制一份，把对应的X模态的也从原始的复制一份出来，并把键的名字改为X模态的
+    model.load_state_dict(state_dict, strict=False) # model是作者自己定义的模型
     del state_dict
     
     t_end = time.time()

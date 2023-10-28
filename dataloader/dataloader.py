@@ -30,7 +30,7 @@ class TrainPre(object):
         self.norm_std = norm_std
 
     def __call__(self, rgb, gt, modal_x):
-        rgb, gt, modal_x = random_mirror(rgb, gt, modal_x)
+        rgb, gt, modal_x = random_mirror(rgb, gt, modal_x)  # 50%概率镜像翻转
         if config.train_scale_array is not None:
             rgb, gt, modal_x, scale = random_scale(rgb, gt, modal_x, config.train_scale_array)
 
